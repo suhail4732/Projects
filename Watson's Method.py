@@ -4,8 +4,11 @@ import numpy as np
 ## Field of pixels to represent locations on sample
 pixels = np.ones((100, 100))    # lengths in nm
 
-beamLoc = [50, 50]
+beamPath = [[i, 50] for i in range(25, 75)]
 
+
+##for i in range(220, 270):
+##    beamPath.append([300, 0])
 
 def DEI(rsquared):
     eta = 0.5
@@ -14,14 +17,15 @@ def DEI(rsquared):
     ## https://doi.org/10.1016/S0167-9317(00)00320-8, equation in introduction:
     return 100/(1 + eta) * (((1/(np.pi * alpha**2)) * np.exp(-rsquared/alpha**2)) + ((eta/(np.pi * beta**2)) * np.exp(-rsquared/beta**2)))
 
-for x in range(len(pixels)):
-    for y in range(len(pixels[0])):
-        pixels[x][y] -= DEI((beamLoc[0] - x)**2 + (beamLoc[1] - y)**2)
-        pixels[x][y] = max(0, pixels[x][y])
+def fireBeam(beamLoc):
+    for y in range(len(pixels)):
+        for x in range(len(pixels[0])):
+            pixels[x][y] -= DEI((beamLoc[0] - x)**2 + (beamLoc[1] - y)**2)
+            pixels[x][y] = max(0, pixels[x][y])
 
-##         np.array([[1, 2, 3],
-##                   [4, 5, 6],
-##                   [7, 8, 9]])
+for i, location in enumerate(beamPath):
+    fireBeam(location)
+    print(str(location) + ": " + str(i + 1) + "/" + str(len(beamPath)))
 
 plt.matshow(pixels)
 plt.show()
