@@ -20,7 +20,7 @@ def DEI(rsquared):
 def fireBeam(beamLoc):
     for y in range(len(pixels)):
         for x in range(len(pixels[0])):
-            pixels[x][y] -= DEI((beamLoc[0] - x)**2 + (beamLoc[1] - y)**2)
+            pixels[x][y] += DEI((beamLoc[0] - x)**2 + (beamLoc[1] - y)**2)
             pixels[x][y] = max(0, pixels[x][y])
 
 for i, location in enumerate(beamPath):
