@@ -9,23 +9,23 @@ shotPixels = np.zeros((size, size)) # * 50nm
 
 
 eta = 0.5
-sigma_B = 120 # * 50nm
+sigma_B = 15 # * 50nm
 sigma_A = 15   # * 50nm
 
 baseDosePower = 1
 
-shotPixels[int(  size/4) - 1][int(size/8) -1: int(7*size/8)] = 1
-shotPixels[int(  size/4)    ][int(size/8) -1: int(7*size/8)] = 1
-shotPixels[int(  size/4) + 1][int(size/8) -1: int(7*size/8)] = 1
+def setTargetBox(pt1, pt2):
+    global shotPixels
+    
+    for x in range(pt1[0], pt2[0] + 1):
+        for y in range(pt1[1], pt2[1] + 1):
+            shotPixels[x][y] = 1
+            #print(shotPixels)
 
-shotPixels[int(3*size/4) - 1][int(size/8) -1: int(7*size/8)] = 1
-shotPixels[int(3*size/4)    ][int(size/8) -1: int(7*size/8)] = 1
-shotPixels[int(3*size/4) + 1][int(size/8) -1: int(7*size/8)] = 1
 
-for x in range(int(size/4), int(3*size/4)):
-    shotPixels[int(x)][int(  size/8) - 1] = 1
-    shotPixels[int(x)][int(  size/8)    ] = 1
-    shotPixels[int(x)][int(  size/8) + 1] = 1
+setTargetBox([15, 15], [25, 85])
+setTargetBox([25, 15], [75, 25])
+setTargetBox([75, 15], [85, 85])
 
 print("Shots set")
 
@@ -33,15 +33,16 @@ plt.matshow(shotPixels)
 plt.show()
 
 P_B = lambda rsquared : (eta/(sigma_B**2)) * np.exp(-rsquared/(sigma_B**2))
-P_A = lambda rsquared : (1  /(sigma_A**2)) * np.exp(-rsquared/(sigma_A**2))
+P_A = lambda rsquared : 0#1 if rsquared < 1 else 0 #(1  /(sigma_A**2)) * np.exp(-rsquared/(sigma_A**2))
 
 scatterDistr = np.zeros((size, size))
 for x in range(size):
     for y in range(size):
         scatterDistr[x][y] += (P_B(dist := (x-size/2)**2 + (y-size/2)**2) + P_A(dist))
 
-##plt.matshow(scatterDistr)
-##plt.show()
+plt.matshow(scatterDistr)
+plt.colorbar()
+plt.show()
 
 
 ##for doseCount in range(1):
@@ -55,8 +56,9 @@ plt.matshow(dosePixels)
 plt.colorbar()
 plt.show()
 
-correctedShots = 2 * shotPixels * (2 - dosePixels)
+correctedShots = 2 * shotPixels * (1 - dosePixels)
 plt.matshow(correctedShots)
+plt.colorbar()
 plt.show()
 
 print("Corrected convolution: ", end = "")
