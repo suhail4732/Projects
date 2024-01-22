@@ -12,12 +12,22 @@ eta = 0.5
 sigma_B = 120 # * 50nm
 sigma_A = 15   # * 50nm
 
-baseDosePower = 50
+baseDosePower = 1
 
-shotPixels[int(  size/4)][int(size/8) : int(7*size/8) : int(size/20)] = 1
-shotPixels[int(3*size/4)][int(size/8) : int(7*size/8) : int(size/20)] = 1
-for x in range(int(size/4), int(3*size/4), int(size/20)):
-    shotPixels[int(x)][int(  size/8)] = 1
+shotPixels[int(  size/4) - 1][int(size/8) -1: int(7*size/8)] = 1
+shotPixels[int(  size/4)    ][int(size/8) -1: int(7*size/8)] = 1
+shotPixels[int(  size/4) + 1][int(size/8) -1: int(7*size/8)] = 1
+
+shotPixels[int(3*size/4) - 1][int(size/8) -1: int(7*size/8)] = 1
+shotPixels[int(3*size/4)    ][int(size/8) -1: int(7*size/8)] = 1
+shotPixels[int(3*size/4) + 1][int(size/8) -1: int(7*size/8)] = 1
+
+for x in range(int(size/4), int(3*size/4)):
+    shotPixels[int(x)][int(  size/8) - 1] = 1
+    shotPixels[int(x)][int(  size/8)    ] = 1
+    shotPixels[int(x)][int(  size/8) + 1] = 1
+
+print("Shots set")
 
 plt.matshow(shotPixels)
 plt.show()
