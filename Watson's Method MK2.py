@@ -23,9 +23,10 @@ def setTargetBox(pt1, pt2):
             #print(shotPixels)
 
 
-setTargetBox([15, 15], [25, 85])
-setTargetBox([25, 15], [75, 25])
-setTargetBox([75, 15], [85, 85])
+setTargetBox([15, 15], [30, 85])
+setTargetBox([30, 15], [70, 30])
+setTargetBox([30, 50], [70, 65])
+setTargetBox([70, 15], [85, 85])
 
 print("Shots set")
 
@@ -40,9 +41,9 @@ for x in range(size):
     for y in range(size):
         scatterDistr[x][y] += (P_B(dist := (x-size/2)**2 + (y-size/2)**2) + P_A(dist))
 
-plt.matshow(scatterDistr)
-plt.colorbar()
-plt.show()
+##plt.matshow(scatterDistr)
+##plt.colorbar()
+##plt.show()
 
 
 ##for doseCount in range(1):
@@ -56,7 +57,7 @@ plt.matshow(dosePixels)
 plt.colorbar()
 plt.show()
 
-correctedShots = 2 * shotPixels * (1 - dosePixels)
+correctedShots = (3 * shotPixels * (1 - dosePixels)) + shotPixels
 plt.matshow(correctedShots)
 plt.colorbar()
 plt.show()
@@ -72,3 +73,6 @@ plt.show()
 samplePixels = np.where(correctedDosePixels > 1, 1, 0)
 plt.matshow(samplePixels)
 plt.show()
+
+##plt.matshow(np.where(samplePixels == 1 or shotPixels == 1, 1, 0) + shotPixels)
+##plt.show()
