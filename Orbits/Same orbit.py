@@ -32,15 +32,15 @@ def pend(intial,t):
 
     
 #empty array for accelerations
-    accelerations=[]
-
+    accelerations_x=[]
+    accelerations_y=[]
 
     
 
 
     #co-ordinates for x,y,z in 3 rows *(number of masses) columns
-    coords=  np.array([intial[0:int(2*N/5)]]) 
-    coords= coords.reshape(2,go)                   
+    coords= np.array([intial[0:int(N/5)],intial[int(N/5):int((2*N)/5)]])
+                       
 
    
     
@@ -54,31 +54,33 @@ def pend(intial,t):
    
         #acceleration in each plane for each mass
 
-        
-        acc= G*M_T[:]*(coords[0,:]-coords[0,a],coords[1,:]-coords[1,a])/np.abs((distant)**3 +1e-9)
-        
-        accelerations.append(acc)
-        
+        acc_x= G*M_T[:]*(coords[0,:]-coords[0,a])/np.abs((distant)**3+1e-30)
+        acc_y= G*M_T[:]*(coords[1,:]-coords[1,a])/np.abs((distant)**3+1e-30)
+
+
+
+        accelerations_x.append(acc_x)
+        accelerations_y.append(acc_y)
 
     
     #sum of acceleration for each body in each plane
-    accelerations =np.concatenate( accelerations , axis=0 )
+    accelerations_x=np.sum(accelerations_x,axis=1)
+    accelerations_y=np.sum(accelerations_y,axis=1)
 
-    c=(np.sum( accelerations, axis=1)).reshape((go,2)).T
-
-    accelerations =np.concatenate( c , axis=0 )
- 
-
+    
+   
 
     #velocity for return function
-    velocity= intial[2*go:4*go]
+    vx=intial[int((2*N)/5) : int((3*N)/5)]
+    vy=intial[int((3*N)/5) : int((4*N)/5)]
+
 
     
     #return list of values
-    listp=[velocity,accelerations,oppo]
+    listp=[vx,vy,accelerations_x,accelerations_y,oppo]
     listp=np.array(np.concatenate( listp , axis=None ))
 
-       
+    
     return listp
 
 
@@ -96,20 +98,22 @@ L=1e9
 ###in the system that can be changed
 
 #masses
-M_i=[M_s,0.330*M,4.87*M,5.97*M]
+M_i=[M_s,M_s,M_s]
 
 #x-position
-x=[0,57.9*L,108.2*L,149.6*L]
+x=[-Au,Au,0]
 
 #y-position
-y=[0,0,0,0]
+y=[0,0,np.sqrt(3)*Au]
 
+
+v=21e3
+#meters per seconds
 #x-velocity
-vx=[0,0,0,0]
+vx=[-v/2,-v/2,v]
 
 #y-velocity
-vy=[0,47.4e3,35e3,29.8e3]
-
+vy=[+v*(np.sqrt(3)/2),-v*(np.sqrt(3)/2),0]
 
 #place all values in an array
 intial=[x,y,vx,vy,M_i]
@@ -118,7 +122,9 @@ intial=np.array(np.concatenate( intial , axis=None ))
 
 
 #time
-t=np.linspace(0,year(2),100)
+t=np.linspace(0,year(5),10000)
+
+
 
 
 
@@ -139,9 +145,11 @@ oppo=np.zeros(oppo)
 
 
 
+
 #solution 
 #tolerance changed to get more precise result
 sol = odeint(pend, intial, t,atol=1e-12 ,rtol=1e-12)
+
 
 
 
@@ -156,9 +164,10 @@ for m in range(go):
 
 
 
+
 ax[0].set_xlabel('x [Au]',fontsize=14)
 ax[0].set_ylabel('y [Au]',fontsize=14)
-#ax[0].axis('equal')
+ax[0].axis('equal')
 ax[0].legend(loc='best')
 
 #bottom figure, x-axis against time
@@ -171,8 +180,11 @@ ax[1].set_ylabel('x [Au]',fontsize=14)
 plt.tight_layout()
 
 
+plt.tight_layout()
 
 #energy values, sum of KE + GPE= constant
+
+
 
 
 velocity_x=sol[:,int((2*N)/5):int((3*N)/5)]
@@ -210,13 +222,14 @@ M_i=np.array(M_i)
 #x and y coordinates
 x=sol[:,0:int((N)/5)]
 y=sol[:,int((N)/5):int((2*N)/5)]
-#number of rows for x and y
+
 numb=np.size(t)    
 
 x1=[]
 y1=[]
 
 #finding the distance between every mass
+
 for a in range(numb):
     op=[]
     io=[]
@@ -244,17 +257,16 @@ for a in range(numb):
 
 
 
-#distance between each mass in each co-ordinate
+#distance between each mass
 x1=np.array(x1)
 y1=np.array(y1)
 
-#distance between each mass
 r=np.sqrt(x1**2 +y1**2)
 
 
+#distance between each mass
 
 
-#gpe for each mass for each combination for distance
 gpe_a=[]
 for op in range(numb):
     qwem=r[op]
@@ -269,8 +281,10 @@ for op in range(numb):
     gpe=np.sum(gpe)
     gpe_a.append(gpe)
 
-#gpe is doubled so needs to be halved
+       
 gpe_a=np.array(gpe_a)*(0.5)
+
+
 
 
 
@@ -282,14 +296,14 @@ N=np.size(Energy)
 
 E_0 = Energy[0] * np.ones((1, N))
 
+
 change_E= (Energy- E_0)/(E_0)
 
 #Transpose array
 change_E=change_E.T
-
+#Convert to microJoules
 change_Emu= change_E
 
-#plot figure
 plt.figure(figsize=(6,6))
 plt.plot(t/year(1), change_Emu, 'g')
 #plt.title('Relative change in energy against time')

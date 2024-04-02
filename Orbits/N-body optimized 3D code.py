@@ -11,75 +11,67 @@ Created on Mon Nov 28 18:38:43 2022
 import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
+
 import time
 start_time = time.time()
 
 
-#defintions
 
+#function for a year
 def year(n):
     return n*365*24*60*60
 
-def acc(M,x1,x2,distance):
-    G = 6.67e-11
-    acc= G*M*(x2-x1)/np.abs((distance)**3)
-    return acc
 
 
 #function for odeint    
 def pend(intial,t):
 
 
-    
-#empty array for accelerations
+    #empty array for accelerations
     accelerations=[]
-
-
     
-
 
     #co-ordinates for x,y,z in 3 rows *(number of masses) columns
-    coords=  np.array([intial[0:int(2*N/5)]]) 
-    coords= coords.reshape(2,go)                   
+    coords=  np.array([intial[0:int(3*N/7)]]) 
+    coords= coords.reshape(3,go)
+
 
    
     
     for a in range(go):
         #finding the distance between each mass code
         distant=np.sqrt((coords[0,a]-coords[0,:])**2 + 
-                        (coords[1,a]-coords[1,:])**2 )
+                        (coords[1,a]-coords[1,:])**2 +
+                        (coords[2,a]-coords[2,:])**2) 
         
-        
-   
-   
+ 
         #acceleration in each plane for each mass
-
         
-        acc= G*M_T[:]*(coords[0,:]-coords[0,a],coords[1,:]-coords[1,a])/np.abs((distant)**3 +1e-9)
+        acc= G*M_T[:]*(coords[0,:]-coords[0,a],coords[1,:]-coords[1,a], 
+                             coords[2,:]-coords[2,a])/np.abs((distant)**3 +1e-9)
+        
         
         accelerations.append(acc)
-        
-
     
     #sum of acceleration for each body in each plane
     accelerations =np.concatenate( accelerations , axis=0 )
 
-    c=(np.sum( accelerations, axis=1)).reshape((go,2)).T
+    c=(np.sum( accelerations, axis=1)).reshape((go,3)).T
 
     accelerations =np.concatenate( c , axis=0 )
  
 
 
     #velocity for return function
-    velocity= intial[2*go:4*go]
+    velocity= intial[3*go:6*go]
 
     
     #return list of values
     listp=[velocity,accelerations,oppo]
     listp=np.array(np.concatenate( listp , axis=None ))
 
-       
     return listp
+
 
 
 #Astronomical unit
@@ -88,173 +80,191 @@ Au= 1.496e11
 pc=3.09e16
 #Mass of the sun
 M_s=1.99e30
-
+#big G
+G = 6.67e-11
+#useful
 M=1e24
 L=1e9
 
+
 ###These values are the intial conditions for the system and number of bodies 
-###in the system that can be changed
+###in the system. 
+
 
 #masses
-M_i=[M_s,0.330*M,4.87*M,5.97*M]
+M_i=[M_s,0.330*M,4.87*M,M]
 
 #x-position
-x=[0,57.9*L,108.2*L,149.6*L]
+x=[0,57.9*L,108.2*L,20*Au]
 
 #y-position
 y=[0,0,0,0]
+
+#z-position
+z=[0,0,0,0]
 
 #x-velocity
 vx=[0,0,0,0]
 
 #y-velocity
-vy=[0,47.4e3,35e3,29.8e3]
+vy=[0,47.4e3,35e3,10e3]
+
+#z-velocity
+vz=[0,0,0,0]
 
 
-#place all values in an array
-intial=[x,y,vx,vy,M_i]
+#put all values into a list and send to ode
+intial=[x,y,z,vx,vy,vz,M_i]
 intial=np.array(np.concatenate( intial , axis=None ))
 
 
-
 #time
-t=np.linspace(0,year(2),100)
+t=np.linspace(0,year(10),1000)
 
-
-
-##These values are used in the function pend()
+#values used in the loop
 intial=np.array(intial)
 N=np.size(intial)
+#spacing between each co-ordinate
+go=int(N/7)
 #mass values
-M_T=intial[int(4*N/5):int(N)]
+M_T=intial[int(6*N/7):int(N)]
 M_T=np.array(M_T)
-#number of columns for each co-ordinate/mass
-go=int(N/5)
-G = 6.67e-11
+    
 
-#mass dosen't change, return zero from function as mass dosen't need to be solved
+#mass dosen't change, return zero from function since mass dosen't need to be solved
 oppo=np.size(M_T)
 oppo=np.zeros(oppo)
 
 
 
-
-#solution 
-#tolerance changed to get more precise result
-sol = odeint(pend, intial, t,atol=1e-12 ,rtol=1e-12)
-
-
-
-#plot subplot 
-
-fig, ax=plt.subplots(2,1,figsize=(10,8),gridspec_kw={'height_ratios': [7, 3]})
+#solution to the ode
+#atol and rtol can be change to get lower error in energy
+sol = odeint(pend, intial, t, atol=1e-7 ,rtol=1e-7)
 
 
 
-for m in range(go):
-    ax[0].plot(sol[:, (m)]/Au, sol[:, (m+(int((N)/5)))]/Au ,label='body'+str(m+1))
+ax = plt.figure(figsize=(8,6)).add_subplot(projection='3d')
+
+    
+#3D plot, using a loop for each plot
+for m in range(int((N)/7)):
+    ax.plot(sol[:, (m)]/Au, sol[:, (m+(int((N)/7)))]/Au , 
+            sol[:, (m+(int(2*N/7)))]/Au ,
+            label='Body'+str(m+1))
 
 
-
-ax[0].set_xlabel('x [Au]',fontsize=14)
-ax[0].set_ylabel('y [Au]',fontsize=14)
-#ax[0].axis('equal')
-ax[0].legend(loc='best')
-
-#bottom figure, x-axis against time
-for m in range(go):
-    ax[1].plot(t/year(1),sol[:, m]/Au)
-
-ax[1].set_xlabel('Time [yr]',fontsize=14)
-ax[1].set_ylabel('x [Au]',fontsize=14)
-
+ax.set_xlabel('x [Au]')
+ax.set_ylabel('y [Au]')
+ax.set_zlabel('z [Au]')
+ax.legend(loc='best')
 plt.tight_layout()
 
+print("--- %s seconds ---" % (time.time() - start_time))
 
+
+#%%
 
 #energy values, sum of KE + GPE= constant
 
 
-velocity_x=sol[:,int((2*N)/5):int((3*N)/5)]
-velocity_y=sol[:,int((3*N)/5):int((4*N)/5)]
+N=np.size(intial)
 
+#get each velocity value from solution
+velocity_x=sol[: , int((3*N)/7):int((4*N)/7)]
+velocity_y=sol[: , int((4*N)/7):int((5*N)/7)]
+velocity_z=sol[: , int((5*N)/7):int((6*N)/7)]
+
+#number of rows from solution of odes
 numb=np.size(t)    
+go=int(N/7)
+
+
+
 
 veles=[]
 
-#velocity squared
+#find the magnitude of velocity for each mass
 for a in range(numb):
-    v=(velocity_x[a,:])**2 + (velocity_y[a,:])**2
+    #all velocity value in each coordinate
+    v= (velocity_x[a,:])**2 + (velocity_y[a,:])**2 + (velocity_z[a,:])**2
     veles.append(v)
-    
-veles=np.array( veles)
+
+
+veles=np.array(veles)
 
 
 
-
-#kinetic energy of each mass
+#find KE for each mass at each time interval
 ke_array=[]
-for q in range(go):
+for q in range(int(go)):
     ke_1= 0.5*M_i[q]*veles[:,q]
     ke_array.append(ke_1)
     
-ke_array=np.array(ke_array )
+ 
+ke_array=np.array(ke_array)    
+ 
 
-#KE of all mass at each time t
 ke_T= np.sum(ke_array,axis=0)
 
 
 M_i=np.array(M_i)
 
 
-#x and y coordinates
-x=sol[:,0:int((N)/5)]
-y=sol[:,int((N)/5):int((2*N)/5)]
-#number of rows for x and y
+
+   
+
+x=sol[:,0:int((N)/7)]
+y=sol[:,int((N)/7):int((2*N)/7)]
+z=sol[:,int((2*N)/7):int((3*N)/7)]
+
+
 numb=np.size(t)    
 
+#empty array for positions
 x1=[]
 y1=[]
+z1=[]
 
 #finding the distance between every mass
 for a in range(numb):
     op=[]
     io=[]
+    zo=[]
     for k in range(go):
         m=[]
         fl=[]
+        oup=[]
         for i in range(go): 
-            #difference between all the x values
             xl=(x[a,k]-x[a,i])
-            #difference between all the y values
             yl=(y[a,k]-y[a,i])
+            zl=(z[a,k]-z[a,i])
             m.append(xl)
             fl.append(yl)
+            oup.append(zl)
         m=np.array(np.concatenate( m , axis=None ))
         fl=np.array(np.concatenate( fl , axis=None ))
+        oup=np.array(np.concatenate( oup , axis=None ))
         op.append(m)
         io.append(fl)
+        zo.append(oup)
     op=np.array(np.concatenate( op , axis=None ))
     op=np.reshape(op,(go,go)) 
     io=np.array(np.concatenate( io , axis=None ))
-    io=np.reshape(io,(go,go)) 
+    io=np.reshape(io,(go,go))
+    zo=np.array(np.concatenate( zo , axis=None ))
+    zo=np.reshape(zo,(go,go)) 
     x1.append(op)
     y1.append(io)
+    z1.append(zo)
  
-
-
-
-#distance between each mass in each co-ordinate
+#distance on each axes into an array   
 x1=np.array(x1)
 y1=np.array(y1)
-
+z1=np.array(z1)
 #distance between each mass
-r=np.sqrt(x1**2 +y1**2)
+r=np.sqrt(x1**2 +y1**2+z1**2)
 
 
-
-
-#gpe for each mass for each combination for distance
 gpe_a=[]
 for op in range(numb):
     qwem=r[op]
@@ -269,7 +279,8 @@ for op in range(numb):
     gpe=np.sum(gpe)
     gpe_a.append(gpe)
 
-#gpe is doubled so needs to be halved
+#since the GPE found in the loop has double the value 
+#gpe needs to be halfed
 gpe_a=np.array(gpe_a)*(0.5)
 
 
@@ -277,25 +288,22 @@ gpe_a=np.array(gpe_a)*(0.5)
 Energy = gpe_a +ke_T
 
 #find de and plot de against against time
-
 N=np.size(Energy)
 
 E_0 = Energy[0] * np.ones((1, N))
+
 
 change_E= (Energy- E_0)/(E_0)
 
 #Transpose array
 change_E=change_E.T
 
-change_Emu= change_E
 
-#plot figure
 plt.figure(figsize=(6,6))
-plt.plot(t/year(1), change_Emu, 'g')
+plt.plot(t, change_E, 'g')
 #plt.title('Relative change in energy against time')
-plt.xlabel('time [yr]')
-plt.ylabel('Relative $\Delta$ E')
-
+plt.xlabel('time [s]')
+plt.ylabel('Relative $\Delta$ E ')
 plt.tight_layout()
 
-print("--- %s seconds ---" % (time.time() - start_time))
+
